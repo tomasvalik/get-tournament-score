@@ -164,9 +164,7 @@ def add_hole_status(player_df, course_df):
     player_df['Hole Status'] = hole_status
     return player_df
 
-def parse_data(file):
-    with open(file, 'r') as f:
-        content = f.readlines()
+def parse_data(content):
     cleaned_content = [line.strip() for line in content if line.strip()]
     cleaned_content = [line for line in cleaned_content if not line.startswith("CASH LINE")]
 
@@ -276,7 +274,9 @@ def main():
     # uploaded_file = "mcr2024_MPO.csv"
     
     if uploaded_file is not None:
-        course_df, player_dfs, tournament_details, round_info = parse_data(uploaded_file)
+        content = uploaded_file.getvalue().decode("utf-8").splitlines()
+
+        course_df, player_dfs, tournament_details, round_info = parse_data(content)
 
         st.title(tournament_details[0])
         st.markdown(f":date: {tournament_details[1]}, :round_pushpin: {tournament_details[2]}")
