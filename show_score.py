@@ -271,16 +271,14 @@ def get_score_midround(player_df, hole_num, course_df):
 
 def main():
     st.set_page_config(page_title="Disc Golf Tournament", layout="wide")
-    # st.title('Disc Golf Tournament Results | proDiscgolf.cz')
 
-    # uploaded_file = st.file_uploader("Upload your CSV file with results", type="csv")
-    uploaded_file = "mcr2024_MPO.csv"
+    uploaded_file = st.file_uploader("Upload your CSV file with results", type="csv")
+    # uploaded_file = "mcr2024_MPO.csv"
     
     if uploaded_file is not None:
         course_df, player_dfs, tournament_details, round_info = parse_data(uploaded_file)
 
         st.title(tournament_details[0])
-        # st.write(tournament_details[1], "\n", tournament_details[2])
         st.markdown(f":date: {tournament_details[1]}, :round_pushpin: {tournament_details[2]}")
         
         st.divider()
@@ -367,13 +365,14 @@ if __name__ == "__main__":
 
 
 # DŮLEŽITÉ
-# - připojit se na github s projektem
-# - zkusit deploy, a jestli to dokáže použít někdo na dálku
 # - doplnit text u uploadu k přípravě dat z PDGA
 # - přepnout na upload
+# - vyzkoušet, jestli to funguje i na čtyřkolový turnaj
+# - přidat průměrné skóre na jamce do tabulky o hřišti
 
 # VEDLEJŠÍ
 # - obarvit skóre na jamkách
 # - nadpisy nad tabulkou aby byly více odpovídající aji kolu
 # - pročistit kód a okomentovat funkce
+# - přidat graf progressu turnajem pro nej hráče
 
