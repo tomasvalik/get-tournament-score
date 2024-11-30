@@ -9,6 +9,8 @@ Created on Tue Nov 26 19:20:54 2024
 import pandas as pd
 import re
 import streamlit as st
+import os
+
 
 # %% HELPER FUNCTIONS
 
@@ -265,93 +267,144 @@ def get_score_midround(player_df, hole_num, course_df):
     
     return standings_df[["Place", "Name", 'Total', "Rd", "Hole Scores"]]
     
+
+def load_tournament_mapping(file_path):
+    mapping = {}
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            for line in f:
+                # Split each line into key-value pairs by the colon
+                if ":" in line:
+                    file_name, display_name = line.split(":", 1)
+                    # Clean and strip quotes/spaces
+                    file_name = file_name.strip().strip('"')
+                    display_name = display_name.strip().strip('"')
+                    mapping[file_name] = display_name
+    except FileNotFoundError:
+        st.error(f"Mapping file '{file_path}' not found.")
+    return mapping
+
 # %% MAIN FUNCTION
 
 def main():
     st.set_page_config(page_title="Disc Golf Tournament", layout="wide")
-
-    uploaded_file = st.file_uploader("Upload your CSV file with results", type="csv")
-    # uploaded_file = "mcr2024_MPO.csv"
     
-    if uploaded_file is not None:
-        content = uploaded_file.getvalue().decode("utf-8").splitlines()
+    data_folder = "data"
+    mapping_file = "tournament_names.txt"
+    
+    tournament_mapping = load_tournament_mapping(mapping_file)
 
-        course_df, player_dfs, tournament_details, round_info = parse_data(content)
+    available_files = [
+        file for file in os.listdir(data_folder) if file.endswith(".csv")
+    ]
+    
+    available_files = sorted(available_files, reverse=True)
 
-        st.title(tournament_details[0])
-        st.markdown(f":date: {tournament_details[1]}, :round_pushpin: {tournament_details[2]}")
-        
-        st.divider()
+    dropdown_list = []
+    current_year = None
 
-        round_options = {i: f"Round {i+1}" for i in range(len(player_dfs))}
-        selected_round = st.segmented_control(
-            "Select a round/hole",
-            options=round_options.keys(),
-            format_func=lambda x: round_options[x],
-            selection_mode="single",
-            default=0
-        )
-        if selected_round is None:
-            selected_round = 0
+    for file in available_files:
+        year = file.split("_")[0]  # Extract the year from the filename
+        if year != current_year:
+            dropdown_list.append(f"--- {year} ---")  # Add a header for the year
+            current_year = year
+        dropdown_list.append(file)  # Add the tournament file
 
-        
-        hole_options = {i: f'{i}' for i in range(0, 19)}  # Mapping for holes 1 to 18
-        selected_hole = st.segmented_control(
-            "Select a hole",
-            options=hole_options.keys(),
-            format_func=lambda option: hole_options[option],
-            selection_mode="single",
-            default=18,
-            label_visibility="collapsed"
-        )
-        if selected_hole is None:
-            selected_hole = 18
+    selected_option = st.selectbox(
+        "Select a tournament you'd like to display:",
+        options=dropdown_list,
+        format_func=lambda x: tournament_mapping.get(x, x) if not x.startswith("---") else x,
+    )
 
-        st.subheader(
-            "Standings Before the Round" if selected_hole == 0 else 
-            (f"Standings After {selected_hole} holes" if selected_hole < 18 else "Final Standings")
-        )
+    if not selected_option or selected_option.startswith("---"):
+        st.warning("Please select a valid tournament, not a year header.")
+        return
 
-        player_df = player_dfs[selected_round]
-        
-        if not isinstance(player_df, pd.DataFrame):
-            st.error("Error: Selected round does not contain valid player data.")
-        else:
-            standings_df = get_score_midround(player_df, selected_hole, course_df)
-            st.dataframe(standings_df, hide_index=True)
+    selected_file = selected_option
+    file_path = os.path.join(data_folder, selected_file)
+    with open(file_path, "r", encoding="utf-8") as f:
+        content = f.readlines()
 
-        st.divider()
+    course_df, player_dfs, tournament_details, round_info = parse_data(content)
 
-        st.subheader("Course Information")
-        
-        transposed_course_df = course_df.T.drop(index='Hole Number')
-        transposed_course_df.index = ["Length", "Par"]
-        transposed_course_df.columns = [f"{i+1}" for i in range(transposed_course_df.shape[1])]
-        transposed_course_df = transposed_course_df.apply(pd.to_numeric, errors='coerce')
-        
-        total_length, total_par = transposed_course_df.loc["Length"].sum(), transposed_course_df.loc["Par"].sum()
-        
-        st.markdown(f" :straight_ruler: **Length:**  {total_length} m, :flying_disc: **Par:**  {total_par}")
+    st.title(tournament_mapping.get(selected_file, "Tournament Details"))
+    st.markdown(f":date: {tournament_details[1]}, :round_pushpin: {tournament_details[2]}")
+            
+    file_path = os.path.join(data_folder, selected_file)
+    with open(file_path, "r", encoding="utf-8") as f:
+        content = f.readlines()
+    
+    st.divider()
 
-        st.dataframe(transposed_course_df, hide_index=False)
+    round_options = {i: f"Round {i+1}" for i in range(len(player_dfs))}
+    selected_round = st.segmented_control(
+        "Select a round/hole",
+        options=round_options.keys(),
+        format_func=lambda x: round_options[x],
+        selection_mode="single",
+        default=0
+    )
+    if selected_round is None:
+        selected_round = 0
 
-        st.divider()
+    
+    hole_options = {i: f'{i}' for i in range(0, 19)}  # Mapping for holes 1 to 18
+    selected_hole = st.segmented_control(
+        "Select a hole",
+        options=hole_options.keys(),
+        format_func=lambda option: hole_options[option],
+        selection_mode="single",
+        default=18,
+        label_visibility="collapsed"
+    )
+    if selected_hole is None:
+        selected_hole = 18
 
-        st.subheader("Download Assets")
-        
-        st.download_button(
-            label="Download Standings as CSV",
-            data=standings_df.to_csv(index=False),
-            file_name=f"standings_rd{selected_round+1}h{selected_hole}.csv",
-            mime="text/csv"
-        )
-        
-        st.download_button(
-            label="Download Course Info as CSV",
-            data=course_df.to_csv(index=False),
-            file_name="course_info.csv",
-            mime="text/csv"
-        )
+    st.subheader(
+        "Standings Before the Round" if selected_hole == 0 else 
+        (f"Standings After {selected_hole} holes" if selected_hole < 18 else "Final Standings")
+    )
+
+    player_df = player_dfs[selected_round]
+    
+    if not isinstance(player_df, pd.DataFrame):
+        st.error("Error: Selected round does not contain valid player data.")
+    else:
+        standings_df = get_score_midround(player_df, selected_hole, course_df)
+        st.dataframe(standings_df, hide_index=True)
+
+    st.divider()
+
+    st.subheader("Course Information")
+    
+    transposed_course_df = course_df.T.drop(index='Hole Number')
+    transposed_course_df.index = ["Length", "Par"]
+    transposed_course_df.columns = [f"{i+1}" for i in range(transposed_course_df.shape[1])]
+    transposed_course_df = transposed_course_df.apply(pd.to_numeric, errors='coerce')
+    
+    total_length, total_par = transposed_course_df.loc["Length"].sum(), transposed_course_df.loc["Par"].sum()
+    
+    st.markdown(f" :straight_ruler: **Length:**  {total_length} m, :flying_disc: **Par:**  {total_par}")
+
+    st.dataframe(transposed_course_df, hide_index=False)
+
+    st.divider()
+
+    st.subheader("Download Assets")
+    
+    st.download_button(
+        label="Download Standings as CSV",
+        data=standings_df.to_csv(index=False),
+        file_name=f"standings_rd{selected_round+1}h{selected_hole}.csv",
+        mime="text/csv"
+    )
+    
+    st.download_button(
+        label="Download Course Info as CSV",
+        data=course_df.to_csv(index=False),
+        file_name="course_info.csv",
+        mime="text/csv"
+    )
 
 
 
@@ -362,17 +415,4 @@ if __name__ == "__main__":
 
 
 # %%
-
-
-# DŮLEŽITÉ
-# - doplnit text u uploadu k přípravě dat z PDGA
-# - přepnout na upload
-# - vyzkoušet, jestli to funguje i na čtyřkolový turnaj
-# - přidat průměrné skóre na jamce do tabulky o hřišti
-
-# VEDLEJŠÍ
-# - obarvit skóre na jamkách
-# - nadpisy nad tabulkou aby byly více odpovídající aji kolu
-# - pročistit kód a okomentovat funkce
-# - přidat graf progressu turnajem pro nej hráče
 
