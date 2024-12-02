@@ -17,4 +17,3 @@
 "2024_6_MPO_BNB.csv": "CDGT: Budišovská Břidla 2024"
 "2024_7_MPO_MO.csv": "PCT: Moravian Open 2024"
 "2024_8_MPO_STP.csv": "PCT: STP Open 2024"
-"2024_9_MPO_USDGC.csv": "United States Disc Golf Championship 2024"

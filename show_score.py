@@ -134,22 +134,8 @@ def add_space_to_name(name):
     return re.sub(r'([a-záéíóúýčďěňřšťžů])([A-ZÁÉÍÓÚÝČĎĚŇŘŠŤŽŮ])', r'\1 \2', name)
 
 def add_hole_status(player_df, course_df):
-    if 'Par' not in course_df.columns:
-        st.error("Error: 'Par' column is missing from the course data.")
-        return player_df  # Return the unmodified DataFrame
-
-    # Ensure 'Par' column is numeric
-    course_df['Par'] = pd.to_numeric(course_df['Par'], errors='coerce')
-
-    # Handle missing or invalid data
-    if course_df['Par'].isnull().any():
-        st.warning("Warning: Some 'Par' values are missing or invalid. These rows will be skipped.")
-        course_df = course_df.dropna(subset=['Par'])
-
-    course_df['Par'] = course_df['Par'].astype(int)  # Safe conversion to int
-    # Further processing as usual...
-
-    par_values = course_df['Par'].astype(int).tolist()  # Safe conversion to int
+    
+    par_values = course_df['Par'].astype(int).tolist()
     score_map = {
         -4: "CONDOR", -3: "ALBATROSS", -2: "EAGLE", -1: "BIRDIE", 0: "PAR", 
         1: "BOGEY", 2: "DBL BOGEY", 3: "TRPL BOGEY", 4: "4x BOGEY", 5: "5x BOGEY"
