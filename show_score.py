@@ -128,7 +128,6 @@ def parse_course_info(content):
         "Length (m)": lengths,
         "Par": pars}
         )
-    
 
 def add_space_to_name(name):
     return re.sub(r'([a-záéíóúýčďěňřšťžů])([A-ZÁÉÍÓÚÝČĎĚŇŘŠŤŽŮ])', r'\1 \2', name)
@@ -147,11 +146,10 @@ def add_hole_status(player_df, course_df):
         diffs = []
         statuses = []
         for score, par in zip(scores, par_values):
-            # Handle invalid score (non-numeric values like 'F', 'X', etc.)
             try:
                 score_int = int(score)
             except ValueError:
-                score_int = 999  # You can change this to any default value or treatment for non-numeric scores
+                score_int = 999  
                 
             diff = score_int - par
             diffs.append(diff)
@@ -169,17 +167,9 @@ def add_hole_status(player_df, course_df):
 def parse_data(content):
     cleaned_content = [line.strip() for line in content if line.strip()]
     cleaned_content = [line for line in cleaned_content if not line.startswith("CASH LINE")]
-
-    # Extract tournament details
     tournament_details = parse_tournament_details(cleaned_content)
-
-    # Extract round info
     round_info = parse_round_info(cleaned_content)
-
-    # Extract course info
     course_df = parse_course_info(cleaned_content)
-
-    # Extract player data for all rounds
     player_dfs = parse_all_player_data(cleaned_content)
 
     return course_df, player_dfs, tournament_details, round_info
@@ -201,17 +191,14 @@ def get_start_scores(player_df):
     return player_df[['Name', 'Start Score']]
 
 def get_score_midround(player_df, hole_num, course_df):
-
     player_df = add_hole_status(player_df, course_df)
-    
     start_scores = get_start_scores(player_df).copy()
-    
+
     if hole_num == 0:
         start_scores.loc[:, 'Total'] = start_scores['Start Score']
         start_scores.loc[:, 'Rd'] = 0  
         start_scores.loc[:, 'Hole Scores'] = [[] for _ in range(len(start_scores))]
         standings_df = start_scores.sort_values(by='Total').reset_index(drop=True)
-
     else:
         cumulative_scores = []
         round_scores = []
@@ -239,15 +226,13 @@ def get_score_midround(player_df, hole_num, course_df):
         start_scores.loc[:, 'Hole Scores'] = hole_scores_upto_hole_num
         start_scores.loc[:, 'Hole Status'] = hole_status_upto_hole_num
     
-        standings_df = start_scores.sort_values(by=['Total', 'Rd','Name'], ascending=[True, True, True]).reset_index(drop=True)
-
+        standings_df = start_scores.sort_values(by=['Total', 'Rd', 'Name'], ascending=[True, True, True]).reset_index(drop=True)
 
     standings_df['Total'] = standings_df['Total'].fillna(999)
     standings_df['Rd'] = standings_df['Rd'].fillna(999)
 
     standings_df['Total'] = standings_df['Total'].astype(int)
     standings_df['Rd'] = standings_df['Rd'].astype(int)
-
 
     # Rank players based on Total, using 'min' method for ties
     standings_df['Place'] = standings_df['Total'].rank(method='min', ascending=True).astype(int)
@@ -264,9 +249,12 @@ def get_score_midround(player_df, hole_num, course_df):
     standings_df['Rd'] = standings_df['Rd'].apply(
         lambda x: "DNF" if x == 999 else (f"E" if x == 0 else (f"+{x}" if x > 0 else str(x)))
     )
-    
-    return standings_df[["Place", "Name", 'Total', "Rd", "Hole Scores"]]
-    
+        
+    hole_diff_df = player_df['Hole Diff'].apply(pd.Series)
+    hole_diff_df = hole_diff_df.applymap(lambda x: pd.NA if x > 900 else x)
+    hole_diff_averages = hole_diff_df.mean(skipna=True).tolist()
+
+    return standings_df[["Place", "Name", 'Total', "Rd", "Hole Scores"]], hole_diff_averages
 
 def load_tournament_mapping(file_path):
     mapping = {}
@@ -283,6 +271,12 @@ def load_tournament_mapping(file_path):
     except FileNotFoundError:
         st.error(f"Mapping file '{file_path}' not found.")
     return mapping
+
+def format_with_sign(value):
+    if pd.isnull(value):
+        return ""
+    return f"{value:+.2f}"
+
 
 # %% MAIN FUNCTION
 
@@ -361,8 +355,11 @@ def main():
         selected_hole = 18
 
     st.subheader(
-        "Standings Before the Round" if selected_hole == 0 else 
-        (f"Standings After {selected_hole} holes" if selected_hole < 18 else "Final Standings")
+        "List of Players" if selected_round == 0 and selected_hole == 0 else
+        (f"Standings Before Round {selected_round + 1}" if selected_hole == 0 else
+         ("Final Standings" if selected_round == len(player_dfs) - 1 and selected_hole == 18 else
+          (f"Standings After Round {selected_round + 1}" if selected_hole == 18 else
+           (f"Standings After {selected_hole} Hole" if selected_hole == 1 else f"Standings After {selected_hole} Holes"))))
     )
 
     player_df = player_dfs[selected_round]
@@ -370,18 +367,20 @@ def main():
     if not isinstance(player_df, pd.DataFrame):
         st.error("Error: Selected round does not contain valid player data.")
     else:
-        standings_df = get_score_midround(player_df, selected_hole, course_df)
+        standings_df, hole_diff_averages = get_score_midround(player_df, selected_hole, course_df)
         st.dataframe(standings_df, hide_index=True)
 
     st.divider()
-
+    
     st.subheader("Course Information")
-    
+    course_df["Scoring Average vs. Par"] = hole_diff_averages
     transposed_course_df = course_df.T.drop(index='Hole Number')
-    transposed_course_df.index = ["Length", "Par"]
+    transposed_course_df.index = ["Length", "Par", "± Avg"]
     transposed_course_df.columns = [f"{i+1}" for i in range(transposed_course_df.shape[1])]
-    transposed_course_df = transposed_course_df.apply(pd.to_numeric, errors='coerce')
-    
+    transposed_course_df.loc["Length"] = transposed_course_df.loc["Length"].astype(int)
+    transposed_course_df.loc["Par"] = transposed_course_df.loc["Par"].astype(int)
+    transposed_course_df.loc["± Avg"] = transposed_course_df.loc["± Avg"].astype(float).apply(format_with_sign)
+
     total_length, total_par = transposed_course_df.loc["Length"].sum(), transposed_course_df.loc["Par"].sum()
     
     st.markdown(f" :straight_ruler: **Length:**  {total_length} m, :flying_disc: **Par:**  {total_par}")
@@ -413,6 +412,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-# %%
 
