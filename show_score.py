@@ -110,10 +110,10 @@ def parse_all_player_data(content):
     return round_dfs
 
 def parse_course_info(content):
-    index = locate_line(content, "Rd")
+    index = locate_line(content, "Thru")
     if index == -1:
         raise ValueError("Course information not found")
-    course_info_data = content[index + 2:index + 2 + 18 * 3]  # 18 holes with 3 fields each
+    course_info_data = content[index + 1:index + 1 + 18 * 3]  # 18 holes with 3 fields each
     hole_numbers, lengths, pars = [], [], []
     for i in range(0, len(course_info_data), 3):
         try:
