@@ -17,3 +17,5 @@
 "2024_6_MPO_BNB.csv": "CDGT: Budišovská Břidla 2024"
 "2024_7_MPO_MO.csv": "PCT: Moravian Open 2024"
 "2024_8_MPO_STP.csv": "PCT: STP Open 2024"
+"2025_1_MPO_CEDGC.csv": "CEDGC 2025 Lipica"
+"2025_2_FPO_CEDGC.csv": "CEDGC 2025 Lipica"
