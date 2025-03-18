@@ -379,7 +379,7 @@ def main():
     transposed_course_df.columns = [f"{i+1}" for i in range(transposed_course_df.shape[1])]
     transposed_course_df.loc["Length"] = transposed_course_df.loc["Length"].astype(int)
     transposed_course_df.loc["Par"] = transposed_course_df.loc["Par"].astype(int)
-    transposed_course_df.loc["± Avg"] = transposed_course_df.loc["± Avg"].astype(float).apply(format_with_sign)
+    transposed_course_df.loc["± Avg"] = transposed_course_df.loc["± Avg"].map(format_with_sign)
 
     total_length, total_par = transposed_course_df.loc["Length"].sum(), transposed_course_df.loc["Par"].sum()
     
@@ -398,9 +398,14 @@ def main():
         mime="text/csv"
     )
     
+    # Create a copy for exporting with signs
+    export_course_df = course_df.copy()
+    export_course_df["Scoring Average vs. Par"] = export_course_df["Scoring Average vs. Par"].map(lambda x: f"{x:+.2f}")
+
+    # Download button with signs in CSV
     st.download_button(
-        label="Download Course Info as CSV",
-        data=course_df.to_csv(index=False),
+        label="Download Course Info as CSV (with ± signs)",
+        data=export_course_df.to_csv(index=False),
         file_name="course_info.csv",
         mime="text/csv"
     )
