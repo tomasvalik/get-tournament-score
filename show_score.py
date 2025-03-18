@@ -373,7 +373,7 @@ def main():
     st.divider()
     
     st.subheader("Course Information")
-    course_df["Scoring Average vs. Par"] = hole_diff_averages
+    course_df["Scoring Average vs. Par"] = [round(x, 2) for x in hole_diff_averages]
     transposed_course_df = course_df.T.drop(index='Hole Number')
     transposed_course_df.index = ["Length", "Par", "± Avg"]
     transposed_course_df.columns = [f"{i+1}" for i in range(transposed_course_df.shape[1])]
