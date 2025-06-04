@@ -20,3 +20,4 @@
 "2025_1_MPO_CEDGC.csv": "MPO | CEDGC 2025 Lipica"
 "2025_2_FPO_CEDGC.csv": "FPO | CEDGC 2025 Lipica"
 "2025_3_MPO_BUROV.csv": "MPO | CDGT: Búřov Open 2025"
+"2025_4_MPO_VACKY.csv": "MPO | CDGT: O slovácký koš(t) 2025"
