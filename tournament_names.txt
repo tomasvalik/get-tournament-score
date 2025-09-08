@@ -25,3 +25,5 @@
 "2025_6_FPO_MCR.csv": "FPO | Mistrovství ČR 2025 Moravský Krumlov"
 "2025_7_MPO_SILESIA.csv": "MPO | PCT: Silesia Open 2025"
 "2025_8_MJ18_MCRJ.csv": "MJ18 | Mistrovství ČR juniorů 2025 Búřov"
+"2025_9_MPO_STP.csv": "MPO | PCT: STP Open 2025"
+"2025_10_FPO_STP.csv": "FPO | PCT: STP Open 2025"
