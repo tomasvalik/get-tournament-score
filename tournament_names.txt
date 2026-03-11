@@ -27,3 +27,5 @@
 "2025_0921_MPO_MO.csv": "MPO | PCT+CDGT: Moravian Open 2025"
 "2025_0921_FPO_MO.csv": "FPO | PCT+CDGT: Moravian Open 2025"
 "2025_1012_MPO_MSR.csv": "MPO | Majstrovstvá Slovenskej republiky 2025 Smolenice"
+"2026_0308_MPO_STP.csv": "MPO | PCT: STP Open 2026"
+"2026_0308_FPO_STP.csv": "FPO | PCT: STP Open 2026"
