@@ -29,3 +29,4 @@
 "2025_1012_MPO_MSR.csv": "MPO | Majstrovstvá Slovenskej republiky 2025 Smolenice"
 "2026_0308_MPO_STP.csv": "MPO | PCT: STP Open 2026"
 "2026_0308_FPO_STP.csv": "FPO | PCT: STP Open 2026"
+"2026_0405_MPO_FALCON.csv": "MPO | CDGT: FALCON Open 2026"
